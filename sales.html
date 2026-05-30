@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Palence Car Tech Journal</title>
+  <!-- Tailwind CSS v4 Build -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <!-- Alpine.js Components Build -->
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+<body class="bg-[#F9FAFB] min-h-screen p-4 md:p-8 font-sans antialiased text-gray-800" x-data="trackerApp">
+
+  <!-- 1. LOGIN TERMINAL OVERLAY GATEWAY -->
+  <div x-show="!loggedIn" x-transition class="max-w-md mx-auto mt-16 bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-md">
+    <div class="text-center mb-6">
+      <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-gray-900 text-white mb-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+        </svg>
+      </div>
+      <h2 class="text-xl font-bold text-gray-900">Palence Car Tech</h2>
+      <p class="text-xs text-gray-400 mt-1">Select your profile and enter your access security token.</p>
+    </div>
+
+    <div x-show="loginError" x-transition class="mb-4 p-3 bg-red-50 border border-red-100 text-red-700 text-xs rounded-xl font-medium">
+      ⚠️ Access Denied: Invalid security password provided.
+    </div>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-xs font-semibold text-gray-500 mb-2">Access Token Secret</label>
+        <input type="password" placeholder="••••••••" x-model="passwordInput" class="w-full bg-[#FAFAFA] border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-gray-900 transition-all text-center tracking-widest"/>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 pt-2">
+        <button @click="handleLogin('Panashe')" class="bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer">
+          Login as Panashe
+        </button>
+        <button @click="handleLogin('Silence')" class="bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer">
+          Login as Silence
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 2. APPLICATION METRICS DASHBOARD CONSOLE -->
+  <div x-show="loggedIn" x-transition class="max-w-5xl mx-auto bg-white rounded-2xl border border-gray-100 p-6 md:p-8 shadow-xs">
+    
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between border-b border-gray-100 pb-6 mb-6 gap-4">
+      <div>
+        <div class="flex items-center gap-2 text-xl font-bold text-gray-900">
+          <svg class="w-6 h-6 text-gray-800" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"></path>
+          </svg>
+          <span>Sales & Inventory Tracker</span>
+        </div>
+        <p class="text-xs text-gray-400 mt-0.5">Car accessories & unlocking split inventory</p>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex items-center gap-2 bg-[#F3F4F6] border border-gray-200 p-1 rounded-xl pr-3">
+          <template x-if="activeUser === 'Panashe'">
+            <span class="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">P</span>
+          </template>
+          <template x-if="activeUser === 'Silence'">
+            <span class="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold text-xs">S</span>
+          </template>
+          <span class="text-xs font-bold text-gray-800" x-text="activeUser + ' Catalog'"></span>
+          <button @click="handleLogout()" title="Lock terminal session" class="ml-2 text-gray-400 hover:text-red-600 transition-colors cursor-pointer">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+            </svg>
+          </button>
+        </div>
+
+        <div class="flex bg-[#F3F4F6] p-1 rounded-xl border border-gray-200">
+          <button @click="currentView = 'Sales'" :class="currentView === 'Sales' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-400 hover:text-gray-900'" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">Sales</button>
+          <button @click="currentView = 'Summary'" :class="currentView === 'Summary' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-400 hover:text-gray-900'" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">Summary</button>
+          <button @click="currentView = 'Stock'" :class="currentView === 'Stock' ? 'bg-white text-gray-900 shadow-xs' : 'text-gray-400 hover:text-gray-900'" class="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 cursor-pointer">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Stock
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN VIEW PANELS -->
+    <div x-show="currentView === 'Sales'" x-transition>
+      
+      <!-- General Dynamic Overview Stats counters -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+        <div class="bg-[#FAFAFA] border border-gray-100 p-5 rounded-2xl">
+          <div class="text-xs font-medium text-gray-400 mb-2 flex items-center gap-1"><span>$</span> Net revenue</div>
+          <p class="text-3xl font-bold text-[#10B981]" x-text="'$' + state.allTime.toFixed(2)"></p>
+        </div>
+        <div class="bg-[#FAFAFA] border border-gray-100 p-5 rounded-2xl">
+          <div class="text-xs font-medium text-gray-400 mb-2">Total Expenses</div>
+          <p class="text-3xl font-bold text-red-500" x-text="'$' + state.totalExpenses.toFixed(2)"></p>
+        </div>
+        <div class="bg-[#FAFAFA] border border-gray-100 p-5 rounded-2xl">
+          <div class="text-xs font-medium text-gray-400 mb-2">This month</div>
+          <p class="text-3xl font-bold text-gray-900" x-text="'$' + state.thisMonth.toFixed(2)"></p>
+        </div>
+        <div class="bg-[#FAFAFA] border border-gray-100 p-5 rounded-2xl">
+          <div class="text-xs font-medium text-gray-400 mb-2">Today</div>
+          <p class="text-3xl font-bold text-gray-900" x-text="'$' + state.today.toFixed(2)"></p>
+        </div>
+        <div class="bg-[#FAFAFA] border border-gray-100 p-5 rounded-2xl">
+          <div class="text-xs font-medium text-gray-400 mb-2">Total entries</div>
+          <p class="text-3xl font-bold text-gray-900" x-text="state.totalEntries"></p>
+        </div>
+      </div>
+
+      <!-- SPLIT INDEPENDENT ACCOUNTING POOLS ROW -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="bg-emerald-50/40 border border-emerald-100/60 p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block mb-1">📦 Android & Accessories Balance</span>
+            <p class="text-xl font-extrabold text-emerald-900" x-text="'$' + state.hardwareBalance.toFixed(2)"></p>
+          </div>
+          <div class="p-2 bg-emerald-100 text-emerald-800 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+          </div>
+        </div>
+
+        <div class="bg-teal-50/40 border border-teal-100/60 p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-teal-700 uppercase tracking-wider block mb-1">🔐 Gathers & Micro SD Balance</span>
+            <p class="text-xl font-extrabold text-teal-900" x-text="'$' + state.gathersBalance.toFixed(2)"></p>
+          </div>
+          <div class="p-2 bg-teal-100 text-teal-800 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+          </div>
+        </div>
+
+        <div class="bg-blue-50/40 border border-blue-100/60 p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-blue-700 uppercase tracking-wider block mb-1">💾 Silence SD Cards</span>
+            <p class="text-xl font-extrabold text-blue-900" x-text="'$' + state.silenceSdCardBalance.toFixed(2)"></p>
+          </div>
+          <div class="p-2 bg-blue-100 text-blue-800 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 00-3.7-3.7 48.656 48.656 0 00-7.324 0 4.006 4.006 0 00-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3l-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 003.7 3.7 48.656 48.656 0 007.324 0 4.006 4.006 0 003.7-3.7c.017-.22.032-.441.046-.662M4.5 12l-3 3m3-3l3 3"/></svg>
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/40 border border-indigo-100/60 p-4 rounded-xl flex items-center justify-between">
+          <div>
+            <span class="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block mb-1">🔊 Silence Underseat</span>
+            <p class="text-xl font-extrabold text-indigo-900" x-text="'$' + state.silenceSubwooferBalance.toFixed(2)"></p>
+          </div>
+          <div class="p-2 bg-indigo-100 text-indigo-800 rounded-lg">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z"/></svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Add Sale Form Panel -->
+      <div class="border border-gray-100 rounded-2xl p-6 bg-white mb-4">
+        <div class="text-sm font-semibold text-gray-900 flex items-center gap-1.5 mb-6"><span class="text-gray-400 text-lg font-normal">+</span> Add sale</div>
+        <form @submit.prevent="submitSale()" class="grid grid-cols-1 md:grid-cols-3 gap-5 items-end">
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-2">Select Product</label>
+            <div class="space-y-2">
+              <select x-model="selectedProduct" required class="w-full bg-[#FAFAFA] border border-gray-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-emerald-500 transition-all cursor-pointer">
+                <option value="Android Radio 9/10 inch" x-show="userHasAccess('Android Radio 9/10 inch')">Android Radio 9/10 inch</option>
+                <option value="Android Radio 7 inch" x-show="userHasAccess('Android Radio 7 inch')">Android Radio 7 inch</option>
+                <option value="SD Card" x-show="userHasAccess('SD Card')">SD Card</option>
+                <option value="Micro SD cards" x-show="userHasAccess('Micro SD cards')">Micro SD cards</option>
+                <option value="Gathers Password 145/155/165/175/185" x-show="userHasAccess('Gathers Password 145/155/165/175/185')">Gathers Password 145/155/165/175/185</option>
+                <option value="Gathers Password 164/174/184" x-show="userHasAccess('Gathers Password 164/174/184')">Gathers Password 164/174/184</option>
+                <option value="Underseat Subwoofer" x-show="userHasAccess('Underseat Subwoofer')">Underseat Subwoofer</option>
+                <option value="Reverse Camera" x-show="userHasAccess('Reverse Camera')">Reverse Camera</option>
+                <option value="Wiring kit" x-show="userHasAccess('Wiring kit')">Wiring kit</option>
+                <option value="Door Speakers" x-show="userHasAccess('Door Speakers')">Door Speakers</option>
+                <option value="Other">Other...</option>
+              </select>
+              <input type="text" placeholder="Type custom product name" x-model="customProduct" x-show="selectedProduct === 'Other'" x-transition :required="selectedProduct === 'Other'" class="w-full bg-[#FAFAFA] border border-emerald-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-emerald-500 transition-all"/>
+              
+              <!-- DYNAMIC ACTION: Silence Custom Product Description Input -->
+              <div x-show="activeUser === 'Silence'" x-transition class="pt-1">
+                <input type="text" placeholder="Add product item description / notes" x-model="silenceProductDesc" class="w-full bg-[#FAFAFA] border border-blue-200 rounded-xl px-4 py-2.5 text-xs focus:outline-none focus:border-blue-500 transition-all text-gray-600 font-medium placeholder:font-normal" />
+              </div>
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-2">Qty <span x-show="selectedProduct !== 'Other'" class="text-gray-400" x-text="'(In Stock: ' + (state.inventory[selectedProduct] || 0) + ')'"></span></label>
+            <input type="number" placeholder="1" x-model="qty" required min="1" class="w-full bg-[#FAFAFA] border border-gray-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-emerald-500 transition-all"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-2">Unit price ($)</label>
+            <div class="relative">
+              <input type="number" step="0.01" placeholder="0.00" x-model="price" required class="w-full bg-[#FAFAFA] border border-gray-200 rounded-xl pl-4 pr-20 py-3 text-xs focus:outline-none focus:border-emerald-500 transition-all"/>
+              <button type="submit" class="absolute right-2 top-2 bottom-2 bg-gray-900 text-white px-4 rounded-lg text-[11px] font-medium hover:bg-gray-800 transition-colors cursor-pointer">Submit Sale</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <!-- Less Expense Section Block -->
+      <div class="border border-red-100 rounded-2xl p-6 bg-red-50/30 mb-8">
+        <div class="text-sm font-semibold text-red-900 flex items-center gap-1.5 mb-6">
+          <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+          </svg>
+          <span>Less Expense</span>
+        </div>
+        <form @submit.prevent="submitExpense()" class="grid grid-cols-1 md:grid-cols-4 gap-5 items-end">
+          <div class="md:col-span-2">
+            <label class="block text-xs font-medium text-gray-500 mb-2">Expense Description</label>
+            <input type="text" placeholder="e.g., Shop setup tools, hardware packaging material" x-model="expenseDescription" required class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-red-500 transition-all"/>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-2">Deduct From Profit Category</label>
+            <select x-model="expenseCategory" required class="w-full bg-white border border-gray-200 rounded-xl px-4 py-3 text-xs focus:outline-none focus:border-red-500 transition-all cursor-pointer">
+              <template x-if="activeUser === 'Panashe'">
+                <optgroup label="Panashe Balance Targets">
+                  <option value="Hardware">Hardware Pool</option>
+                  <option value="Gathers">Gathers Pool</option>
+                </optgroup>
+              </template>
+              <template x-if="activeUser === 'Silence'">
+                <optgroup label="Silence Balance Targets">
+                  <option value="SD Cards">SD Cards Pool</option>
+                  <option value="Subwoofers">Subwoofers Pool</option>
+                </optgroup>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-gray-500 mb-2">Amount ($)</label>
+            <div class="relative">
+              <input type="number" step="0.01" placeholder="0.00" x-model="expenseAmount" required class="w-full bg-white border border-gray-200 rounded-xl pl-4 pr-24 py-3 text-xs focus:outline-none focus:border-red-500 transition-all"/>
+              <button type="submit" class="absolute right-2 top-2 bottom-2 bg-red-600 text-white px-4 rounded-lg text-[11px] font-medium hover:bg-red-700 transition-colors cursor-pointer">Deduct</button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- VIEW: Summary Analytics Placeholder -->
+    <div x-show="currentView === 'Summary'" x-transition class="py-12 text-center border border-gray-100 border-dashed rounded-2xl bg-gray-50/50">
+      <svg class="w-8 h-8 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 3.055A9.003 9.003 0 1020.945 13H11V3.055z"/><path stroke-linecap="round" stroke-linejoin="round" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"/></svg>
+      <h3 class="text-sm font-semibold text-gray-700 mb-1">Performance Analytics</h3>
+      <p class="text-xs text-gray-400 max-w-sm mx-auto">Saved records are secured. Representative analytics metrics, data exports and distribution tracking tools render inside this module area.</p>
+    </div>
+
+    <!-- VIEW: Physical Stock Management Engine -->
+    <div x-show="currentView === 'Stock'" x-transition>
+      <div class="border border-gray-100 rounded-2xl p-6 bg-white shadow-xs mb-8">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-4 mb-6">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">Physical Stock Control</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Manage stock actions and adjustments for items under your profile</p>
+          </div>
+          <span class="text-[11px] bg-amber-50 text-amber-700 font-semibold px-2.5 py-1 rounded-md border border-amber-100">Live Counter</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr class="text-gray-400 border-b border-gray-50 font-medium">
+                <th class="pb-3 font-semibold">Accessory Item</th>
+                <th class="pb-3 text-center font-semibold">Current Count</th>
+                <th class="pb-3 text-right font-semibold">Inventory Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <template x-for="(stock, item) in state.inventory">
+                <tr x-show="userHasAccess(item)" class="hover:bg-gray-50/40 transition-colors">
+                  <td class="py-4 font-medium text-gray-800" x-text="item"></td>
+                  <td class="py-4 text-center">
+                    <span :class="stock <= 3 ? 'bg-red-50 text-red-600 border border-red-100 font-bold' : 'bg-gray-50 text-gray-900 font-semibold'" class="px-3 py-1 rounded-lg text-xs" x-text="stock + ' left'"></span>
+                  </td>
+                  <td class="py-4 text-right">
+                    <div class="inline-flex gap-1.5 items-center">
+                      <button @click="adjustStock(item, -state.inventory[item])" title="Reset to 0" class="bg-gray-50 hover:bg-red-50 text-gray-400 hover:text-red-600 px-2 py-1 rounded-md transition-all text-[11px] border border-gray-200 hover:border-red-200 mr-1 cursor-pointer">Clear (0)</button>
+                      <button @click="adjustStock(item, -1)" class="bg-red-50 hover:bg-red-600 text-red-600 hover:text-white font-semibold px-2 py-1 rounded-md transition-all text-[11px] border border-red-100 hover:border-red-600 mr-2 cursor-pointer">-1</button>
+                      <button @click="adjustStock(item, 1)" class="bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-medium px-2 py-1 rounded-md transition-all text-[11px] cursor-pointer">+1</button>
+                      <button @click="adjustStock(item, 2)" class="bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-medium px-2 py-1 rounded-md transition-all text-[11px] cursor-pointer">+2</button>
+                      <button @click="adjustStock(item, 5)" class="bg-gray-100 hover:bg-gray-900 hover:text-white text-gray-700 font-medium px-2 py-1 rounded-md transition-all text-[11px] cursor-pointer">+5</button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- LOG ENTRIES STREAMS DISPLAY FOOTER -->
+    <div class="mt-4" x-show="currentView !== 'Summary'">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        
+        <!-- PANASHE HISTORICAL COLUMN CONTAINER -->
+        <div class="border border-gray-100 rounded-2xl p-5 bg-white flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-emerald-700 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                Panashe's Operations
+              </h4>
+              <span class="text-[10px] bg-emerald-50 text-emerald-700 font-bold px-2 py-0.5 rounded-sm" x-text="state.activityLogs.filter(l => l.user === 'Panashe').length + ' total'"></span>
+            </div>
+
+            <!-- SUB-CATEGORY 1: HARDWARE & ACCESSORIES -->
+            <div class="mb-5">
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
+                <span>📦 Hardware & Accs</span>
+                <span x-text="state.activityLogs.filter(l => l.user === 'Panashe' && l.type !== 'expense' && l.type !== 'stock' && !isGathersPoolItem(l.product)).length"></span>
+              </div>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1 border-l-2 border-emerald-100 pl-2">
+                <template x-if="state.activityLogs.filter(l => l.user === 'Panashe' && l.type !== 'expense' && !isGathersPoolItem(l.product)).length === 0">
+                  <div class="py-3 text-gray-300 text-xs italic">No hardware operations logged.</div>
+                </template>
+                
+                <template x-for="log in state.activityLogs.filter(l => l.user === 'Panashe' && !isGathersPoolItem(l.product) && (l.type === 'sale' || l.type === 'stock'))">
+                  <div class="bg-gray-50/60 border border-gray-100 rounded-xl p-2.5 text-xs flex justify-between items-start group">
+                    <div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span :class="log.type === 'sale' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'" class="px-1 py-0.2 rounded text-[8px] uppercase font-bold" x-text="log.type"></span>
+                        <strong class="font-semibold text-gray-800 text-[11px]" x-text="log.product"></strong>
+                        <span x-show="log.type === 'sale'" class="text-gray-400" x-text="'(x' + log.qty + ')'"></span>
+                      </div>
+                      <p class="text-[9px] text-gray-400 mt-0.5" x-text="log.timestamp"></p>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1 pl-2">
+                      <div class="font-bold text-[11px] whitespace-nowrap">
+                        <span x-show="log.type === 'sale'" class="text-emerald-600" x-text="'$' + log.total.toFixed(2)"></span>
+                        <span x-show="log.type === 'stock'" :class="log.action.includes('+') ? 'text-blue-600' : 'text-red-500'" x-text="log.action"></span>
+                      </div>
+                      <button @click="deleteLogItem(log.id)" x-show="activeUser === 'Panashe'" class="text-[10px] text-red-500 font-bold hover:underline bg-red-50 px-1.5 py-0.5 rounded border border-red-100 transition-colors mt-0.5 cursor-pointer">Delete</button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- SUB-CATEGORY 2: GATHERS UNLOCK & MICRO SD SERVICES -->
+            <div class="mb-5">
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
+                <span>🔐 Gathers & Micro SD Pool</span>
+                <span x-text="state.activityLogs.filter(l => l.user === 'Panashe' && l.type !== 'expense' && l.type !== 'stock' && isGathersPoolItem(l.product)).length"></span>
+              </div>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1 border-l-2 border-teal-100 pl-2">
+                <template x-if="state.activityLogs.filter(l => l.user === 'Panashe' && l.type !== 'expense' && isGathersPoolItem(l.product)).length === 0">
+                  <div class="py-3 text-gray-300 text-xs italic">No Gathers or Micro SD actions recorded.</div>
+                </template>
+                
+                <template x-for="log in state.activityLogs.filter(l => l.user === 'Panashe' && isGathersPoolItem(l.product) && (l.type === 'sale' || l.type === 'stock'))">
+                  <div class="bg-gray-50/60 border border-gray-100 rounded-xl p-2.5 text-xs flex justify-between items-start">
+                    <div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span :class="log.type === 'sale' ? 'bg-teal-100 text-teal-800' : 'bg-amber-100 text-amber-800'" class="px-1 py-0.2 rounded text-[8px] uppercase font-bold" x-text="log.type"></span>
+                        <strong class="font-semibold text-gray-800 text-[11px]" x-text="log.product"></strong>
+                        <span x-show="log.type === 'sale'" class="text-gray-400" x-text="'(x' + log.qty + ')'"></span>
+                      </div>
+                      <p class="text-[9px] text-gray-400 mt-0.5" x-text="log.timestamp"></p>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1 pl-2">
+                      <div class="font-bold text-[11px] whitespace-nowrap">
+                        <span x-show="log.type === 'sale'" class="text-teal-600" x-text="'$' + log.total.toFixed(2)"></span>
+                        <span x-show="log.type === 'stock'" :class="log.action.includes('+') ? 'text-blue-600' : 'text-red-500'" x-text="log.action"></span>
+                      </div>
+                      <button @click="deleteLogItem(log.id)" x-show="activeUser === 'Panashe'" class="text-[10px] text-red-500 font-bold hover:underline bg-red-50 px-1.5 py-0.5 rounded border border-red-100 transition-colors mt-0.5 cursor-pointer">Delete</button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- SUB-CATEGORY 3: EXPENSES LOGGED BY PANASHE -->
+            <div>
+              <div class="text-[10px] font-bold text-red-400 uppercase tracking-wide mb-2 flex items-center justify-between">
+                <span>📉 Expenses Deducted</span>
+                <span x-text="state.activityLogs.filter(l => l.user === 'Panashe' && l.type === 'expense').length"></span>
+              </div>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1 border-l-2 border-red-200 pl-2">
+                <template x-if="state.activityLogs.filter(l => l.user === 'Panashe' && l.type === 'expense').length === 0">
+                  <div class="py-3 text-gray-300 text-xs italic">No expenses reported by Panashe.</div>
+                </template>
+                
+                <template x-for="log in state.activityLogs.filter(l => l.user === 'Panashe' && l.type === 'expense')">
+                  <div class="bg-red-50/40 border border-red-100 rounded-xl p-2.5 text-xs flex justify-between items-start">
+                    <div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span class="bg-red-100 text-red-800 px-1 py-0.2 rounded text-[8px] uppercase font-bold">Expense</span>
+                        <strong class="font-semibold text-gray-800 text-[11px]" x-text="log.product + ' (' + log.category + ')'"></strong>
+                      </div>
+                      <p class="text-[9px] text-gray-400 mt-0.5" x-text="log.timestamp"></p>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1 pl-2">
+                      <div class="font-bold text-[11px] text-red-600 whitespace-nowrap" x-text="'-$' + log.total.toFixed(2)"></div>
+                      <button @click="deleteLogItem(log.id)" x-show="activeUser === 'Panashe'" class="text-[10px] text-red-500 font-bold hover:underline bg-red-50 px-1.5 py-0.5 rounded border border-red-100 transition-colors mt-0.5 cursor-pointer">Delete</button>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- SILENCE HISTORICAL COLUMN CONTAINER -->
+        <div class="border border-gray-100 rounded-2xl p-5 bg-white flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between border-b border-gray-100 pb-3 mb-4">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-blue-700 flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                Silence's Operations
+              </h4>
+              <span class="text-[10px] bg-blue-50 text-blue-700 font-bold px-2 py-0.5 rounded-sm" x-text="state.activityLogs.filter(l => l.user === 'Silence').length + ' total'"></span>
+            </div>
+
+            <!-- SUB-CATEGORY 1: SD CARDS -->
+            <div class="mb-5">
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
+                <span>💾 SD Cards Balance</span>
+                <span x-text="state.activityLogs.filter(l => l.user === 'Silence' && l.type !== 'expense' && l.type !== 'stock' && isSdCardItem(l.product)).length"></span>
+              </div>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1 border-l-2 border-blue-100 pl-2">
+                <template x-if="state.activityLogs.filter(l => l.user === 'Silence' && l.type !== 'expense' && isSdCardItem(l.product)).length === 0">
+                  <div class="py-3 text-gray-300 text-xs italic">No SD card transactions logged.</div>
+                </template>
+                
+                <template x-for="log in state.activityLogs.filter(l => l.user === 'Silence' && isSdCardItem(l.product) && (l.type === 'sale' || l.type === 'stock'))">
+                  <div class="bg-gray-50/60 border border-gray-100 rounded-xl p-2.5 text-xs flex justify-between items-start">
+                    <div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span :class="log.type === 'sale' ? 'bg-blue-100 text-blue-800' : 'bg-amber-100 text-amber-800'" class="px-1 py-0.2 rounded text-[8px] uppercase font-bold" x-text="log.type"></span>
+                        <strong class="font-semibold text-gray-800 text-[11px]" x-text="log.product"></strong>
+                        <span x-show="log.type === 'sale'" class="text-gray-400" x-text="'(x' + log.qty + ')'"></span>
+                      </div>
+                      <p class="text-[9px] text-gray-400 mt-0.5" x-text="log.timestamp"></p>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1 pl-2">
+                      <div class="font-bold text-[11px] text-blue-600 whitespace-nowrap" x-text="'$' + log.total.toFixed(2)"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- SUB-CATEGORY 2: UNDERSEAT SUBWOOFERS -->
+            <div>
+              <div class="text-[10px] font-bold text-gray-400 uppercase tracking-wide mb-2 flex items-center justify-between">
+                <span>🔊 Underseat Subwoofers</span>
+                <span x-text="state.activityLogs.filter(l => l.user === 'Silence' && l.type !== 'expense' && l.type !== 'stock' && !isSdCardItem(l.product)).length"></span>
+              </div>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1 border-l-2 border-indigo-100 pl-2">
+                <template x-if="state.activityLogs.filter(l => l.user === 'Silence' && l.type !== 'expense' && !isSdCardItem(l.product)).length === 0">
+                  <div class="py-3 text-gray-300 text-xs italic">No subwoofer operations logged.</div>
+                </template>
+                
+                <template x-for="log in state.activityLogs.filter(l => l.user === 'Silence' && !isSdCardItem(l.product) && (l.type === 'sale' || l.type === 'stock'))">
+                  <div class="bg-gray-50/60 border border-gray-100 rounded-xl p-2.5 text-xs flex justify-between items-start">
+                    <div>
+                      <div class="flex items-center gap-1.5 flex-wrap">
+                        <span :class="log.type === 'sale' ? 'bg-indigo-100 text-indigo-800' : 'bg-amber-100 text-amber-800'" class="px-1 py-0.2 rounded text-[8px] uppercase font-bold" x-text="log.type"></span>
+                        <strong class="font-semibold text-gray-800 text-[11px]" x-text="log.product"></strong>
+                        <span x-show="log.type === 'sale'" class="text-gray-400" x-text="'(x' + log.qty + ')'"></span>
+                      </div>
+                      <p class="text-[9px] text-gray-400 mt-0.5" x-text="log.timestamp"></p>
+                    </div>
+                    <div class="text-right flex flex-col items-end gap-1 pl-2">
+                      <div class="font-bold text-[11px] text-indigo-600 whitespace-nowrap" x-text="'$' + log.total.toFixed(2)"></div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ALPINE APPLICATION ARCHITECTURE ENGINE -->
+  <script>
+    document.addEventListener('alpine:init', () => {
+      Alpine.data('trackerApp', () => ({
+        // Login State Management
+        loggedIn: false,
+        activeUser: '',
+        passwordInput: '',
+        loginError: false,
+        currentView: 'Sales',
+
+        // Form bindings
+        selectedProduct: 'Android Radio 9/10 inch',
+        customProduct: '',
+        silenceProductDesc: '',
+        qty: 1,
+        price: '',
+        expenseDescription: '',
+        expenseCategory: 'Hardware',
+        expenseAmount: '',
+
+        // Static Profile Passwords (Case-Sensitive)
+        userPasswords: {
+          'Panashe': 'Panashe1738',
+          'Silence': 'Silence8712'
+        },
+
+        // Profile access definitions
+        userPermissions: {
+          'Panashe': [
+            'Android Radio 9/10 inch', 
+            'Android Radio 7 inch', 
+            'Gathers Password 145/155/165/175/185', 
+            'Gathers Password 164/174/184',
+            'Micro SD cards',
+            'Reverse Camera', 
+            'Wiring kit', 
+            'Door Speakers'
+          ],
+          'Silence': [
+            'SD Card', 
+            'Underseat Subwoofer'
+          ]
+        },
+
+        // Core Accounting Data Object
+        state: {
+          allTime: 0.00,
+          totalExpenses: 0.00,
+          thisMonth: 0.00,
+          today: 0.00,
+          totalEntries: 0,
+          hardwareBalance: 0.00,
+          gathersBalance: 0.00,
+          silenceSdCardBalance: 0.00,
+          silenceSubwooferBalance: 0.00,
+          inventory: {
+            'Android Radio 9/10 inch': 12,
+            'Android Radio 7 inch': 8,
+            'SD Card': 45,
+            'Micro SD cards': 30,
+            'Gathers Password 145/155/165/175/185': 99,
+            'Gathers Password 164/174/184': 99,
+            'Underseat Subwoofer': 6,
+            'Reverse Camera': 15,
+            'Wiring kit': 10,
+            'Door Speakers': 24
+          },
+          activityLogs: []
+        },
+
+        init() {
+          // Sync default forms on structural load
+          this.$watch('activeUser', (val) => {
+            if(val === 'Panashe') {
+              this.selectedProduct = 'Android Radio 9/10 inch';
+              this.expenseCategory = 'Hardware';
+            } else if (val === 'Silence') {
+              this.selectedProduct = 'SD Card';
+              this.expenseCategory = 'SD Cards';
+            }
+          });
+        },
+
+        handleLogin(user) {
+          if (this.passwordInput === this.userPasswords[user]) {
+            this.activeUser = user;
+            this.loggedIn = true;
+            this.loginError = false;
+            this.passwordInput = '';
+          } else {
+            this.loginError = true;
+          }
+        },
+
+        handleLogout() {
+          this.loggedIn = false;
+          this.activeUser = '';
+        },
+
+        userHasAccess(product) {
+          if(!this.activeUser || !this.userPermissions[this.activeUser]) return false;
+          return this.userPermissions[this.activeUser].includes(product);
+        },
+
+        isGathersPoolItem(product) {
+          return product.includes('Gathers Password') || product === 'Micro SD cards';
+        },
+
+        isSdCardItem(product) {
+          return product === 'SD Card';
+        },
+
+        submitSale() {
+          let productName = this.selectedProduct === 'Other' ? this.customProduct : this.selectedProduct;
+          let saleQty = parseInt(this.qty);
+          let unitPrice = parseFloat(this.price);
+          let totalSaleValue = saleQty * unitPrice;
+
+          if (this.state.inventory[productName] !== undefined) {
+            this.state.inventory[productName] = Math.max(0, this.state.inventory[productName] - saleQty);
+          }
+
+          if (this.activeUser === 'Panashe') {
+            if (this.isGathersPoolItem(productName)) {
+              this.state.gathersBalance += totalSaleValue;
+            } else {
+              this.state.hardwareBalance += totalSaleValue;
+            }
+          } else if (this.activeUser === 'Silence') {
+            if (this.isSdCardItem(productName)) {
+              this.state.silenceSdCardBalance += totalSaleValue;
+            } else {
+              this.state.silenceSubwooferBalance += totalSaleValue;
+            }
+          }
+
+          this.state.allTime += totalSaleValue;
+          this.state.today += totalSaleValue;
+          this.state.thisMonth += totalSaleValue;
+          this.state.totalEntries++;
+
+          this.state.activityLogs.unshift({
+            id: Date.now(),
+            user: this.activeUser,
+            type: 'sale',
+            product: productName,
+            qty: saleQty,
+            total: totalSaleValue,
+            timestamp: new Date().toLocaleString()
+          });
+
+          this.customProduct = '';
+          this.silenceProductDesc = '';
+          this.qty = 1;
+          this.price = '';
+        },
+
+        submitExpense() {
+          let amount = parseFloat(this.expenseAmount);
+          this.state.totalExpenses += amount;
+          this.state.allTime -= amount;
+          this.state.totalEntries++;
+
+          if (this.expenseCategory === 'Hardware') this.state.hardwareBalance -= amount;
+          if (this.expenseCategory === 'Gathers') this.state.gathersBalance -= amount;
+          if (this.expenseCategory === 'SD Cards') this.state.silenceSdCardBalance -= amount;
+          if (this.expenseCategory === 'Subwoofers') this.state.silenceSubwooferBalance -= amount;
+
+          this.state.activityLogs.unshift({
+            id: Date.now(),
+            user: this.activeUser,
+            type: 'expense',
+            product: this.expenseDescription,
+            category: this.expenseCategory,
+            total: amount,
+            timestamp: new Date().toLocaleString()
+          });
+
+          this.expenseDescription = '';
+          this.expenseAmount = '';
+        },
+
+        adjustStock(item, amount) {
+          let actionLabel = amount >= 0 ? `+${amount}` : `${amount}`;
+          if (amount === -this.state.inventory[item]) actionLabel = "Reset to 0";
+          
+          this.state.inventory[item] = Math.max(0, this.state.inventory[item] + amount);
+          this.state.totalEntries++;
+
+          this.state.activityLogs.unshift({
+            id: Date.now(),
+            user: this.activeUser,
+            type: 'stock',
+            product: item,
+            action: actionLabel,
+            timestamp: new Date().toLocaleString()
+          });
+        },
+
+        deleteLogItem(id) {
+          let targetIndex = this.state.activityLogs.findIndex(l => l.id === id);
+          if (targetIndex === -1) return;
+          let log = this.state.activityLogs[targetIndex];
+
+          if (log.type === 'sale') {
+            this.state.allTime -= log.total;
+            this.state.today -= log.total;
+            this.state.thisMonth -= log.total;
+            
+            if (log.user === 'Panashe') {
+              if (this.isGathersPoolItem(log.product)) {
+                this.state.gathersBalance -= log.total;
+              } else {
+                this.state.hardwareBalance -= log.total;
+              }
+            }
+            if (this.state.inventory[log.product] !== undefined) {
+              this.state.inventory[log.product] += log.qty;
+            }
+          } else if (log.type === 'expense') {
+            this.state.totalExpenses -= log.total;
+            this.state.allTime += log.total;
+            if (log.category === 'Hardware') this.state.hardwareBalance += log.total;
+            if (log.category === 'Gathers') this.state.gathersBalance += log.total;
+          }
+
+          this.state.activityLogs.splice(targetIndex, 1);
+        }
+      }));
+    });
+  </script>
+</body>
+</html>
